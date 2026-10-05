@@ -30,8 +30,15 @@ const questions = [
   },
 ];
 
+const questionsElement = document.getElementById("questions");
+const submitButton = document.getElementById("submit");
+const scoreElement = document.getElementById("score");
+
+// Get saved answers from sessionStorage
+let userAnswers = JSON.parse(sessionStorage.getItem("progress")) || [];
 // Display the quiz questions and choices
 function renderQuestions() {
+  questionsElement.innerHTML = "";
   for (let i = 0; i < questions.length; i++) {
     const question = questions[i];
     const questionElement = document.createElement("div");
@@ -43,14 +50,43 @@ function renderQuestions() {
       choiceElement.setAttribute("type", "radio");
       choiceElement.setAttribute("name", `question-${i}`);
       choiceElement.setAttribute("value", choice);
+      // Restore previously selected answer
       if (userAnswers[i] === choice) {
-        choiceElement.setAttribute("checked", true);
+        choiceElement.checked = true;
       }
-      const choiceText = document.createTextNode(choice);
+      // Save answer whenever user selects an option
+      choiceElement.addEventListener("change", function () {
+        userAnswers[i] = this.value;
+        sessionStorage.setItem(
+          "progress",
+          JSON.stringify(userAnswers)
+        );
+      });
+     const choiceText = document.createTextNode(choice);
       questionElement.appendChild(choiceElement);
       questionElement.appendChild(choiceText);
     }
     questionsElement.appendChild(questionElement);
   }
 }
+
+// Calculate score and save it
+submitButton.addEventListener("click", function () {
+  let score = 0;
+
+  for (let i = 0; i < questions.length; i++) {
+    if (userAnswers[i] === questions[i].answer) {
+      score++;
+    }
+  }
+  scoreElement.textContent = `Your score is ${score} out of ${questions.length}.`;
+  // Save score in localStorage
+  localStorage.setItem("score", score);
+});
+// Restore previous score after refresh
+const savedScore = localStorage.getItem("score");
+if (savedScore !== null) {
+  scoreElement.textContent = `Your score is ${savedScore} out of ${questions.length}.`;
+}
+// Render quiz
 renderQuestions();
